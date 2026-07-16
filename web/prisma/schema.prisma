@@ -1,0 +1,125 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Activity {
+  id        String @id @default(uuid())
+  user      String
+  action    String
+  target    String
+  timestamp String
+}
+
+model TeamCode {
+  code        String  @id
+  projectName String
+  used        Boolean @default(false)
+}
+
+model FileEntry {
+  id         String @id @default(uuid())
+  name       String
+  category   String
+  size       Float  @default(0)
+  uploadedBy String
+  uploadedAt String
+  url        String @default("")
+  versions   FileVersion[]
+}
+
+model FileVersion {
+  id          String @id @default(uuid())
+  fileId      String
+  fileName    String
+  version     Int
+  editedBy    String
+  editedAt    String
+  description String @default("")
+  file        FileEntry @relation(fields: [fileId], references: [id])
+}
+
+model Task {
+  id          String @id @default(uuid())
+  title       String
+  description String @default("")
+  status      String @default("a_fazer")
+  priority    String @default("media")
+  responsible String @default("")
+  deadline    String @default("")
+  comments    String @default("[]")
+  attachments String @default("[]")
+  createdAt   String
+  createdBy   String
+}
+
+model Component {
+  id           String @id @default(uuid())
+  name         String
+  quantity     Int    @default(0)
+  available    Int    @default(0)
+  inUse        Int    @default(0)
+  supplier     String @default("")
+  price        Float  @default(0)
+  status       String @default("em_estoque")
+  location     String @default("")
+  datasheetUrl String @default("")
+  createdAt    String
+  createdBy    String
+}
+
+model TeamMember {
+  id        String @id @default(uuid())
+  name      String
+  email     String
+  role      String @default("colaborador")
+  avatar    String @default("")
+  invitedAt String
+}
+
+model DiaryEntry {
+  id          String @id @default(uuid())
+  date        String
+  content     String
+  author      String
+  attachments String @default("[]")
+  createdAt   String
+}
+
+model TestRecord {
+  id          String @id @default(uuid())
+  name        String
+  result      Int    @default(0)
+  problem     String @default("")
+  solution    String @default("")
+  attachments String @default("[]")
+  createdBy   String
+  createdAt   String
+}
+
+model Comment {
+  id         String @id @default(uuid())
+  entityType String
+  entityId   String
+  author     String
+  text       String
+  createdAt  String
+}
+
+model CalendarEvent {
+  id          String @id @default(uuid())
+  title       String
+  date        String
+  type        String @default("reuniao")
+  description String @default("")
+}
+
+model Stats {
+  id              String @id @default("singleton")
+  progress        Int    @default(67)
+  totalTests      Int    @default(0)
+  lastUpdate      String
+}

@@ -1,0 +1,346 @@
+import prisma from './prisma'
+import type { ProjectStats, Activity, Task, Component, TeamMember, TaskStatus, DiaryEntry, TestRecord, FileVersion, Comment, CalendarEvent, FebraceData, Role } from './types'
+
+export type FileEntry = {
+  id: string
+  name: string
+  category: 'documentos' | 'cad' | 'codigo' | 'fotos' | 'videos'
+  size: number
+  uploadedBy: string
+  uploadedAt: string
+  url: string
+}
+
+export type TeamCode = {
+  code: string
+  projectName: string
+  used: boolean
+}
+
+function parseJSON<T>(val: string): T {
+  try { return JSON.parse(val) as T } catch { return [] as unknown as T }
+}
+
+function now() {
+  return new Date().toLocaleString('pt-BR')
+}
+
+// === Stats ===
+export async function getStats(): Promise<ProjectStats> {
+  const [tasks, components, files, tests, members, statsRow] = await Promise.all([
+    prisma.task.findMany(),
+    prisma.component.findMany(),
+    prisma.fileEntry.findMany(),
+    prisma.testRecord.findMany(),
+    prisma.teamMember.findMany(),
+    prisma.stats.findUnique({ where: { id: 'singleton' } }),
+  ])
+
+  return {
+    progress: statsRow?.progress ?? 0,
+    openTasks: tasks.filter(t => t.status !== 'concluido').length,
+    totalComponents: components.length,
+    totalFiles: files.length,
+    totalTests: tests.length,
+    totalMembers: members.length,
+    lastUpdate: statsRow?.lastUpdate ?? now(),
+  }
+}
+
+export async function updateStats(partial: Partial<ProjectStats>): Promise<ProjectStats> {
+  const data: Record<string, unknown> = { ...partial, lastUpdate: now() }
+  await prisma.stats.upsert({
+    where: { id: 'singleton' },
+    create: { id: 'singleton', progress: 0, totalTests: 0, lastUpdate: now(), ...data },
+    update: data,
+  })
+  return getStats()
+}
+
+// === Activities ===
+export async function getActivities(): Promise<Activity[]> {
+  const rows = await prisma.activity.findMany({ orderBy: { timestamp: 'desc' } })
+  return rows as Activity[]
+}
+
+export async function addActivity(user: string, action: string, target: string): Promise<Activity> {
+  const row = await prisma.activity.create({
+    data: { id: crypto.randomUUID(), user, action, target, timestamp: now() },
+  })
+  return row as Activity
+}
+
+// === Files ===
+export async function getFiles(): Promise<FileEntry[]> {
+  const rows = await prisma.fileEntry.findMany({ orderBy: { uploadedAt: 'desc' } })
+  return rows as FileEntry[]
+}
+
+export async function addFile(file: FileEntry): Promise<FileEntry> {
+  const row = await prisma.fileEntry.create({ data: file })
+  return row as FileEntry
+}
+
+export async function deleteFile(id: string): Promise<void> {
+  await prisma.fileVersion.deleteMany({ where: { fileId: id } })
+  await prisma.fileEntry.delete({ where: { id } })
+}
+
+// === Tasks ===
+export async function getTasks(): Promise<Task[]> {
+  const rows = await prisma.task.findMany({ orderBy: { createdAt: 'desc' } })
+  return rows.map(r => ({
+    ...r,
+    comments: parseJSON<{ id: string; author: string; text: string; createdAt: string }[]>(r.comments),
+    attachments: parseJSON<{ id: string; name: string; url: string }[]>(r.attachments),
+  })) as Task[]
+}
+
+export async function getTasksByStatus(status: TaskStatus): Promise<Task[]> {
+  const all = await getTasks()
+  return all.filter(t => t.status === status)
+}
+
+export async function addTask(task: Task): Promise<Task> {
+  const row = await prisma.task.create({
+    data: {
+      ...task,
+      comments: JSON.stringify(task.comments),
+      attachments: JSON.stringify(task.attachments),
+    },
+  })
+  return { ...task }
+}
+
+export async function updateTask(id: string, partial: Partial<Task>): Promise<Task | null> {
+  const existing = await prisma.task.findUnique({ where: { id } })
+  if (!existing) return null
+
+  const data: Record<string, unknown> = { ...partial }
+  if (partial.comments) data.comments = JSON.stringify(partial.comments)
+  if (partial.attachments) data.attachments = JSON.stringify(partial.attachments)
+
+  await prisma.task.update({ where: { id }, data })
+  const rows = await getTasks()
+  return rows.find(t => t.id === id) ?? null
+}
+
+export async function deleteTask(id: string): Promise<boolean> {
+  try {
+    await prisma.task.delete({ where: { id } })
+    return true
+  } catch { return false }
+}
+
+// === Components ===
+export async function getComponents(): Promise<Component[]> {
+  const rows = await prisma.component.findMany({ orderBy: { createdAt: 'desc' } })
+  return rows as Component[]
+}
+
+export async function addComponent(comp: Component): Promise<Component> {
+  await prisma.component.create({ data: comp })
+  return comp
+}
+
+export async function updateComponent(id: string, partial: Partial<Component>): Promise<Component | null> {
+  try {
+    await prisma.component.update({ where: { id }, data: partial })
+    const rows = await getComponents()
+    return rows.find(c => c.id === id) ?? null
+  } catch { return null }
+}
+
+export async function deleteComponent(id: string): Promise<boolean> {
+  try {
+    await prisma.component.delete({ where: { id } })
+    return true
+  } catch { return false }
+}
+
+// === Team ===
+export async function getTeamMembers(): Promise<TeamMember[]> {
+  const rows = await prisma.teamMember.findMany()
+  return rows as TeamMember[]
+}
+
+export async function addTeamMember(member: TeamMember): Promise<TeamMember> {
+  await prisma.teamMember.create({ data: member })
+  return member
+}
+
+export async function updateTeamMember(id: string, partial: Partial<TeamMember>): Promise<TeamMember | null> {
+  try {
+    await prisma.teamMember.update({ where: { id }, data: partial })
+    const rows = await getTeamMembers()
+    return rows.find(m => m.id === id) ?? null
+  } catch { return null }
+}
+
+export async function removeTeamMember(id: string): Promise<boolean> {
+  try {
+    await prisma.teamMember.delete({ where: { id } })
+    return true
+  } catch { return false }
+}
+
+// === Team Codes ===
+export async function validateTeamCode(code: string): Promise<TeamCode | null> {
+  const entry = await prisma.teamCode.findUnique({ where: { code } })
+  if (!entry || entry.used) return null
+  await prisma.teamCode.update({ where: { code }, data: { used: true } })
+  return entry as TeamCode
+}
+
+// === Diary ===
+export async function getDiaryEntries(): Promise<DiaryEntry[]> {
+  const rows = await prisma.diaryEntry.findMany({ orderBy: { date: 'desc' } })
+  return rows.map(r => ({
+    ...r,
+    attachments: parseJSON<{ id: string; name: string; type: string; url: string }[]>(r.attachments),
+  })) as DiaryEntry[]
+}
+
+export async function addDiaryEntry(entry: DiaryEntry): Promise<DiaryEntry> {
+  await prisma.diaryEntry.create({
+    data: { ...entry, attachments: JSON.stringify(entry.attachments) },
+  })
+  return entry
+}
+
+export async function updateDiaryEntry(id: string, partial: Partial<DiaryEntry>): Promise<DiaryEntry | null> {
+  try {
+    const data: Record<string, unknown> = { ...partial }
+    if (partial.attachments) data.attachments = JSON.stringify(partial.attachments)
+    await prisma.diaryEntry.update({ where: { id }, data })
+    const rows = await getDiaryEntries()
+    return rows.find(e => e.id === id) ?? null
+  } catch { return null }
+}
+
+export async function deleteDiaryEntry(id: string): Promise<boolean> {
+  try {
+    await prisma.diaryEntry.delete({ where: { id } })
+    return true
+  } catch { return false }
+}
+
+// === Tests ===
+export async function getTestRecords(): Promise<TestRecord[]> {
+  const rows = await prisma.testRecord.findMany({ orderBy: { createdAt: 'desc' } })
+  return rows.map(r => ({
+    ...r,
+    attachments: parseJSON<{ id: string; name: string; type: string; url: string }[]>(r.attachments),
+  })) as TestRecord[]
+}
+
+export async function addTestRecord(record: TestRecord): Promise<TestRecord> {
+  await prisma.testRecord.create({
+    data: { ...record, attachments: JSON.stringify(record.attachments) },
+  })
+  return record
+}
+
+export async function updateTestRecord(id: string, partial: Partial<TestRecord>): Promise<TestRecord | null> {
+  try {
+    const data: Record<string, unknown> = { ...partial }
+    if (partial.attachments) data.attachments = JSON.stringify(partial.attachments)
+    await prisma.testRecord.update({ where: { id }, data })
+    const rows = await getTestRecords()
+    return rows.find(r => r.id === id) ?? null
+  } catch { return null }
+}
+
+export async function deleteTestRecord(id: string): Promise<boolean> {
+  try {
+    await prisma.testRecord.delete({ where: { id } })
+    return true
+  } catch { return false }
+}
+
+// === File Versions ===
+export async function getFileVersions(fileId?: string): Promise<FileVersion[]> {
+  const where = fileId ? { fileId } : {}
+  const rows = await prisma.fileVersion.findMany({ where, orderBy: { version: 'desc' } })
+  return rows as FileVersion[]
+}
+
+export async function addFileVersion(version: FileVersion): Promise<FileVersion> {
+  await prisma.fileVersion.create({ data: version })
+  return version
+}
+
+// === Comments ===
+export async function getComments(entityType: string, entityId: string): Promise<Comment[]> {
+  const rows = await prisma.comment.findMany({
+    where: { entityType, entityId },
+    orderBy: { createdAt: 'asc' },
+  })
+  return rows as Comment[]
+}
+
+export async function addComment(comment: Comment): Promise<Comment> {
+  await prisma.comment.create({ data: comment })
+  return comment
+}
+
+// === Calendar ===
+export async function getCalendarEvents(): Promise<CalendarEvent[]> {
+  const rows = await prisma.calendarEvent.findMany()
+  return rows as CalendarEvent[]
+}
+
+export async function addCalendarEvent(event: CalendarEvent): Promise<CalendarEvent> {
+  await prisma.calendarEvent.create({ data: event })
+  return event
+}
+
+export async function deleteCalendarEvent(id: string): Promise<boolean> {
+  try {
+    await prisma.calendarEvent.delete({ where: { id } })
+    return true
+  } catch { return false }
+}
+
+// === FEBRACE ===
+export async function getFebraceData(): Promise<FebraceData> {
+  const [stats, tasks, components, tests, diary, activities, teamMembers, events] = await Promise.all([
+    getStats(),
+    getTasks(),
+    getComponents(),
+    getTestRecords(),
+    getDiaryEntries(),
+    getActivities(),
+    getTeamMembers(),
+    getCalendarEvents(),
+  ])
+
+  const files = await getFiles()
+  const photos = files
+    .filter(f => f.category === 'fotos')
+    .map(f => ({ name: f.name, url: f.url }))
+
+  const diaryPhotos = diary
+    .flatMap(e => e.attachments.filter(a => a.type === 'foto'))
+    .map(a => ({ name: a.name, url: a.url }))
+
+  return {
+    stats,
+    tasks,
+    components,
+    tests,
+    diary,
+    activities,
+    photos: [...photos, ...diaryPhotos],
+    teamMembers,
+    events,
+  }
+}
+
+export const CATEGORIES = [
+  { value: 'documentos', label: 'Documentos', icon: 'FileText' },
+  { value: 'cad', label: 'CAD', icon: 'Box' },
+  { value: 'codigo', label: 'Código', icon: 'Code' },
+  { value: 'fotos', label: 'Fotos', icon: 'Image' },
+  { value: 'videos', label: 'Vídeos', icon: 'Video' },
+] as const
