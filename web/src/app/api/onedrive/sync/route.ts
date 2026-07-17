@@ -7,7 +7,7 @@ export async function POST() {
     return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
   }
 
-  if (!(session as any).onedriveConnected) {
+  if (!session.onedriveConnected) {
     return NextResponse.json({ error: 'OneDrive não conectado' }, { status: 400 })
   }
 

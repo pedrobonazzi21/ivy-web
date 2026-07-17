@@ -8,12 +8,12 @@ export async function POST() {
     return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
   }
 
-  if ((session as any).onedriveConnected) {
+  if (session.onedriveConnected) {
     return NextResponse.json({ connected: true, message: 'OneDrive já está conectado' })
   }
 
   await updateSession({
-    onedriveConnected: true as any,
+    onedriveConnected: true,
   })
 
   await addActivity(session.name, 'conectou', 'OneDrive ao projeto')
@@ -27,7 +27,7 @@ export async function DELETE() {
   }
 
   await updateSession({
-    onedriveConnected: false as any,
+    onedriveConnected: false,
   })
 
   await addActivity(session.name, 'desconectou', 'OneDrive do projeto')
