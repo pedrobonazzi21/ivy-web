@@ -1,7 +1,8 @@
-import admin from 'firebase-admin'
+import { getApps, initializeApp } from 'firebase-admin/app'
+import { getAuth } from 'firebase-admin/auth'
 
-if (!admin.apps.length) {
-  admin.initializeApp({ projectId: 'ivy-auth-6d981' })
+if (!getApps().length) {
+  initializeApp({ projectId: 'ivy-auth-6d981' })
 }
 
-export const auth = admin.auth()
+export const auth = getAuth()
