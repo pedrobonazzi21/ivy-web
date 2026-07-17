@@ -1,20 +1,23 @@
 import { NextResponse } from 'next/server'
 import { createSession } from '@/lib/session'
+import { auth } from '@/lib/firebase-admin'
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url)
-  const error = searchParams.get('error')
+export async function POST(request: Request) {
+  try {
+    const { token } = await request.json()
+    if (!token) return NextResponse.json({ error: 'Token não fornecido' }, { status: 400 })
 
-  if (error) {
-    return NextResponse.redirect(new URL('/?error=auth_denied', request.url))
+    const decoded = await auth.verifyIdToken(token)
+
+    await createSession({
+      id: decoded.uid,
+      name: decoded.name || decoded.email || 'Usuário',
+      email: decoded.email || '',
+      role: 'admin',
+    })
+
+    return NextResponse.json({ success: true })
+  } catch {
+    return NextResponse.json({ error: 'Token inválido' }, { status: 401 })
   }
-
-  await createSession({
-    id: crypto.randomUUID(),
-    name: 'Usuário',
-    email: 'usuario@ivyprojeto.com',
-    role: 'admin',
-  })
-
-  return NextResponse.redirect(new URL('/dashboard', request.url))
 }
