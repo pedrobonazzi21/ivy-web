@@ -1,0 +1,36 @@
+models_dir: "models"
+
+camera:
+  device_id: 0
+  width: 640
+  height: 480
+  fps: 30
+
+pose:
+  min_detection_confidence: 0.5
+  min_tracking_confidence: 0.5
+
+face_detection:
+  min_detection_confidence: 0.5
+
+face_recognition:
+  tolerance: 0.5
+  known_faces_path: "data/faces/encodings.pkl"
+
+gesture:
+  classifier_path: "data/gestures/gesture_classifier.pkl"
+  min_detection_confidence: 0.5
+  history_frames: 5
+  gesture_hold_frames: 3
+
+visualization:
+  show_landmarks: true
+  show_connections: true
+  show_bbox: true
+  show_info: true
+  overlay_opacity: 0.3
+
+pipeline:
+  enable_pose: true
+  enable_face: true
+  enable_gesture: true

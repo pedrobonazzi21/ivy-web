@@ -111,7 +111,7 @@ export function OneDriveBrowser({ onImportFile }: OneDriveBrowserProps) {
         <Cloud size={48} className="text-zinc-300 mb-4" />
         <h3 className="text-lg font-semibold text-zinc-700 mb-2">OneDrive não conectado</h3>
         <p className="text-sm text-zinc-500 mb-6 text-center max-w-md">
-          Conecte sua conta Microsoft para acessar os arquivos do OneDrive diretamente pela plataforma.
+          Conecte o OneDrive para acessar os arquivos diretamente pela plataforma.
         </p>
         <button
           onClick={handleConnect} disabled={connecting}

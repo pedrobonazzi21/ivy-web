@@ -23,11 +23,10 @@ export function TeamCodeForm({ onSuccess }: TeamCodeFormProps) {
 
   return (
     <div className="space-y-4">
-      <div className="border-t border-zinc-200 pt-6">
-        <p className="mb-1 text-sm font-medium text-zinc-700">Primeiro acesso?</p>
+      <div>
+        <p className="mb-1 text-sm font-medium text-zinc-700">Acessar Projeto</p>
         <p className="mb-4 text-xs text-zinc-500">
-          Digite o código da equipe. O código somente será solicitado no primeiro acesso.
-          Depois disso a conta Microsoft ficará vinculada ao projeto.
+          Digite o código da equipe para acessar o projeto.
         </p>
       </div>
 

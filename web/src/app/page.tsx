@@ -66,14 +66,11 @@ export default function LoginPage() {
         </div>
 
         <div className="mb-8 space-y-6 rounded-xl border border-zinc-200 bg-white p-8 shadow-sm">
-          <MicrosoftLoginButton />
-
           <form onSubmit={handleTeamCode}>
-            <div className="border-t border-zinc-200 pt-6">
-              <p className="mb-1 text-sm font-medium text-zinc-700">Primeiro acesso?</p>
+            <div>
+              <p className="mb-1 text-sm font-medium text-zinc-700">Acessar Projeto</p>
               <p className="mb-4 text-xs text-zinc-500">
-                Digite o código da equipe. O código somente será solicitado no primeiro acesso.
-                Depois disso a conta Microsoft ficará vinculada ao projeto.
+                Digite o código da equipe para acessar o projeto.
               </p>
             </div>
             <div className="mt-3 flex gap-2">

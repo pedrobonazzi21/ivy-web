@@ -119,7 +119,7 @@ model CalendarEvent {
 
 model Stats {
   id              String @id @default("singleton")
-  progress        Int    @default(67)
+  progress        Int    @default(0)
   totalTests      Int    @default(0)
   lastUpdate      String
 }

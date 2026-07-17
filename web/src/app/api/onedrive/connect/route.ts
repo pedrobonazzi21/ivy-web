@@ -8,14 +8,12 @@ export async function POST() {
     return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
   }
 
-  if (session.onedriveConnected) {
+  if ((session as any).onedriveConnected) {
     return NextResponse.json({ connected: true, message: 'OneDrive já está conectado' })
   }
 
   await updateSession({
-    microsoftAccessToken: 'mock_access_token_' + crypto.randomUUID(),
-    microsoftRefreshToken: 'mock_refresh_token_' + crypto.randomUUID(),
-    onedriveConnected: true,
+    onedriveConnected: true as any,
   })
 
   await addActivity(session.name, 'conectou', 'OneDrive ao projeto')
@@ -29,9 +27,7 @@ export async function DELETE() {
   }
 
   await updateSession({
-    microsoftAccessToken: undefined,
-    microsoftRefreshToken: undefined,
-    onedriveConnected: false,
+    onedriveConnected: false as any,
   })
 
   await addActivity(session.name, 'desconectou', 'OneDrive do projeto')
