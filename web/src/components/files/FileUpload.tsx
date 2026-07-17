@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
-import { Upload, FileText, Box, Code, Image, Video, Cloud } from 'lucide-react'
+import { useState, useRef } from 'react'
+import { Upload, FileText, Box, Code, Image, Video } from 'lucide-react'
 import { CATEGORIES } from '@/lib/store'
-import Link from 'next/link'
+import { uploadFile, auth } from '@/lib/firebase'
 
 type FileUploadProps = {
   onUploaded: () => void
@@ -14,27 +14,42 @@ const ICON_MAP: Record<string, typeof FileText> = {
 }
 
 export function FileUpload({ onUploaded }: FileUploadProps) {
-  const [name, setName] = useState('')
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [file, setFile] = useState<File | null>(null)
   const [category, setCategory] = useState('documentos')
-  const [url, setUrl] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [progress, setProgress] = useState(0)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!name.trim()) {
-      setError('Nome do arquivo é obrigatório')
+    if (!file) {
+      setError('Selecione um arquivo')
       return
     }
+    if (!auth.currentUser) {
+      setError('Faça login novamente')
+      return
+    }
+
     setLoading(true)
     setError('')
 
     try {
+      const path = `projetos/ivy/${category}/${Date.now()}_${file.name}`
+      const url = await uploadFile(file, path, (pct) => setProgress(Math.round(pct)))
+
       const res = await fetch('/api/files', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name.trim(), category, size: 0, url: url.trim() }),
+        body: JSON.stringify({
+          name: file.name,
+          category,
+          size: file.size,
+          url,
+        }),
       })
+
       if (!res.ok) {
         const d = await res.json()
         setError(d.error || 'Erro ao enviar')
@@ -44,11 +59,12 @@ export function FileUpload({ onUploaded }: FileUploadProps) {
       await fetch('/api/activities', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'anexou arquivo', target: name.trim() }),
+        body: JSON.stringify({ action: 'anexou arquivo', target: file.name }),
       })
 
-      setName('')
-      setUrl('')
+      setFile(null)
+      setProgress(0)
+      if (inputRef.current) inputRef.current.value = ''
       onUploaded()
     } catch {
       setError('Erro ao enviar arquivo')
@@ -61,18 +77,26 @@ export function FileUpload({ onUploaded }: FileUploadProps) {
     <form onSubmit={handleSubmit} className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
       <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-zinc-500">
         <Upload size={16} />
-        Adicionar Arquivo
+        Upload de Arquivo
       </h3>
 
       <div className="space-y-4">
-        <div>
-          <label className="mb-1 block text-xs font-medium text-zinc-600">Nome do arquivo</label>
+        <div
+          onClick={() => inputRef.current?.click()}
+          className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-zinc-300 p-6 transition-all hover:border-indigo-400 hover:bg-indigo-50"
+        >
+          <Upload size={32} className="text-zinc-300 mb-2" />
+          <p className="text-sm font-medium text-zinc-600">
+            {file ? file.name : 'Clique para selecionar um arquivo'}
+          </p>
+          <p className="text-xs text-zinc-400 mt-1">
+            {file ? `${(file.size / 1024 / 1024).toFixed(2)} MB` : 'Qualquer formato'}
+          </p>
           <input
-            type="text"
-            placeholder="ex: datasheet.pdf"
-            value={name}
-            onChange={(e) => { setName(e.target.value); setError('') }}
-            className="w-full rounded-lg border border-zinc-300 px-4 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+            ref={inputRef}
+            type="file"
+            className="hidden"
+            onChange={(e) => { setFile(e.target.files?.[0] || null); setError('') }}
           />
         </div>
 
@@ -101,44 +125,31 @@ export function FileUpload({ onUploaded }: FileUploadProps) {
           </div>
         </div>
 
-        <div>
-          <label className="mb-1 block text-xs font-medium text-zinc-600">URL / Link (opcional)</label>
-          <input
-            type="text"
-            placeholder="https://..."
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            className="w-full rounded-lg border border-zinc-300 px-4 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
-          />
-        </div>
+        {loading && progress > 0 && (
+          <div>
+            <div className="flex items-center justify-between text-xs text-zinc-500 mb-1">
+              <span>Enviando...</span>
+              <span>{progress}%</span>
+            </div>
+            <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-200">
+              <div
+                className="h-full rounded-full bg-indigo-600 transition-all"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          </div>
+        )}
 
         {error && <p className="text-xs text-red-500">{error}</p>}
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || !file}
           className="flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-900 px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-zinc-800 disabled:opacity-50"
         >
           <Upload size={16} />
-          {loading ? 'Enviando...' : 'Adicionar Arquivo'}
+          {loading ? 'Enviando...' : 'Fazer Upload'}
         </button>
-
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-zinc-200" />
-          </div>
-          <div className="relative flex justify-center text-xs">
-            <span className="bg-white px-2 text-zinc-400">ou</span>
-          </div>
-        </div>
-
-        <Link
-          href="/projeto/onedrive"
-          className="flex w-full items-center justify-center gap-2 rounded-lg border border-indigo-200 bg-indigo-50 px-6 py-3 text-sm font-semibold text-indigo-700 transition-all hover:bg-indigo-100"
-        >
-          <Cloud size={16} />
-          Importar do OneDrive
-        </Link>
       </div>
     </form>
   )

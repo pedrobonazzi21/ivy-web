@@ -48,7 +48,12 @@ export default function LoginPage() {
 
     try {
       if (isSignUp) {
-        if (secretCode !== 'socorro-ivy') {
+        const codeRes = await fetch('/api/auth/validate-code', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code: secretCode }),
+        })
+        if (!codeRes.ok) {
           setError('Código secreto inválido')
           setLoading(false)
           return
