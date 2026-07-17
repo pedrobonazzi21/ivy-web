@@ -1,7 +1,8 @@
 'use client'
 
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { auth } from '@/lib/firebase'
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Dashboard' },
@@ -21,6 +22,12 @@ type NavHeaderProps = {
 
 export function NavHeader({ user }: NavHeaderProps) {
   const pathname = usePathname()
+  const router = useRouter()
+
+  async function handleLogout() {
+    await auth.signOut()
+    window.location.href = '/api/auth/logout'
+  }
 
   return (
     <header className="mb-8 flex items-center justify-between">
@@ -56,12 +63,12 @@ export function NavHeader({ user }: NavHeaderProps) {
             <p className="font-medium text-zinc-800">{user.name}</p>
             <p className="text-zinc-400">{user.role}</p>
           </div>
-          <a
-            href="/api/auth/logout"
+          <button
+            onClick={handleLogout}
             className="rounded-lg border border-zinc-300 px-3 py-1.5 text-xs text-zinc-600 hover:bg-zinc-50"
           >
             Sair
-          </a>
+          </button>
         </div>
       </div>
     </header>
