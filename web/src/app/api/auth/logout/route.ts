@@ -1,7 +1,7 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { destroySession } from '@/lib/session'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   await destroySession()
-  return NextResponse.redirect(new URL('/'))
+  return NextResponse.redirect(new URL('/', request.url))
 }
