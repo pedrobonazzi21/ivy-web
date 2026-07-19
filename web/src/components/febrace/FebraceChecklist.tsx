@@ -11,6 +11,7 @@ export function FebraceChecklist() {
   const [showForm, setShowForm] = useState(false)
   const [formLabel, setFormLabel] = useState('')
   const [formCategory, setFormCategory] = useState('personalizado')
+  const [formCustomCategory, setFormCustomCategory] = useState('')
   const [formResponsible, setFormResponsible] = useState('')
   const [expandedNotes, setExpandedNotes] = useState<string | null>(null)
   const [editNotes, setEditNotes] = useState('')
@@ -38,18 +39,23 @@ export function FebraceChecklist() {
     e.preventDefault()
     if (!formLabel.trim()) return
 
+    const category = formCategory === 'personalizado' && formCustomCategory.trim()
+      ? formCustomCategory.trim()
+      : formCategory
+
     await fetch('/api/checklist', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         label: formLabel.trim(),
-        category: formCategory,
+        category,
         responsible: formResponsible.trim(),
       }),
     })
 
     setFormLabel('')
     setFormCategory('personalizado')
+    setFormCustomCategory('')
     setFormResponsible('')
     setShowForm(false)
     loadItems()
@@ -138,7 +144,10 @@ export function FebraceChecklist() {
   const doneCount = items.filter(i => i.done).length
   const progress = items.length > 0 ? Math.round((doneCount / items.length) * 100) : 0
 
-  const grouped = CHECKLIST_CATEGORY_ORDER.map(cat => ({
+  const allCategories = [...new Set(items.map(i => i.category))]
+  const orderedCategories = [...CHECKLIST_CATEGORY_ORDER.filter(c => allCategories.includes(c)), ...allCategories.filter(c => !CHECKLIST_CATEGORY_ORDER.includes(c))]
+
+  const grouped = orderedCategories.map(cat => ({
     category: cat,
     label: CHECKLIST_CATEGORY_LABELS[cat] ?? cat,
     items: items.filter(i => i.category === cat),
@@ -216,6 +225,11 @@ export function FebraceChecklist() {
                   <option key={c.value} value={c.value}>{c.label}</option>
                 ))}
               </select>
+              {formCategory === 'personalizado' && (
+                <input type="text" placeholder="Nome da nova categoria" value={formCustomCategory} onChange={(e) => setFormCustomCategory(e.target.value)}
+                  className="mt-2 w-full rounded-lg border border-zinc-300 px-4 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                />
+              )}
             </div>
             <div>
               <label className="mb-1 block text-xs font-medium text-zinc-600">Responsável</label>
