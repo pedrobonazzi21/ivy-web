@@ -539,11 +539,13 @@ export async function getUserSettings(userId: string): Promise<UserSettings | nu
   } catch { return null }
 }
 
-export async function upsertUserSettings(settings: UserSettings): Promise<UserSettings> {
+export async function upsertUserSettings(settings: Partial<UserSettings> & { userId: string }): Promise<UserSettings> {
+  const existing = await getUserSettings(settings.userId)
+  const merged = { ...existing, ...settings } as UserSettings
   const row = await prisma.userSettings.upsert({
     where: { userId: settings.userId },
-    create: settings,
-    update: settings,
+    create: merged,
+    update: merged,
   })
   return row as UserSettings
 }

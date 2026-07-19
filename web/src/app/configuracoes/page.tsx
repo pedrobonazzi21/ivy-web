@@ -2,11 +2,11 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Settings, Loader, Camera, Key } from 'lucide-react'
+import { Settings, Loader, Camera, Key, Moon, Sun } from 'lucide-react'
 import { auth, uploadFile } from '@/lib/firebase'
 import { sendPasswordResetEmail } from 'firebase/auth'
-import type { UserSettings } from '@/lib/types'
-import { ROLE_LABELS } from '@/lib/types'
+import type { UserSettings, Theme, Mode } from '@/lib/types'
+import { ROLE_LABELS, THEMES } from '@/lib/types'
 
 export default function ConfiguracoesPage() {
   const router = useRouter()
@@ -31,6 +31,12 @@ export default function ConfiguracoesPage() {
       setUser(auth.user)
       setSettings(data.settings)
       setPhotoUrl(auth.user.photoURL ?? null)
+      if (data.settings?.theme) {
+        document.documentElement.setAttribute('data-theme', data.settings.theme)
+      }
+      if (data.settings?.mode) {
+        document.documentElement.setAttribute('data-mode', data.settings.mode)
+      }
       setLoading(false)
     })
   }, [router])
@@ -56,6 +62,38 @@ export default function ConfiguracoesPage() {
     } catch {
       setPasswordMsg('Erro ao enviar email. Tente novamente.')
     }
+  }
+
+  async function handleThemeChange(theme: Theme) {
+    if (!settings) return
+    setSaving(true)
+    document.documentElement.setAttribute('data-theme', theme)
+    sessionStorage.setItem('ivy_theme', theme)
+    const updated = { ...settings, theme }
+    const res = await fetch('/api/settings', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updated),
+    })
+    const data = await res.json()
+    setSettings(data.settings)
+    setSaving(false)
+  }
+
+  async function handleModeChange(mode: Mode) {
+    if (!settings) return
+    setSaving(true)
+    document.documentElement.setAttribute('data-mode', mode)
+    sessionStorage.setItem('ivy_mode', mode)
+    const updated = { ...settings, mode }
+    const res = await fetch('/api/settings', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updated),
+    })
+    const data = await res.json()
+    setSettings(data.settings)
+    setSaving(false)
   }
 
   async function handleToggle(key: 'notifyTaskAssigned' | 'notifyDeadline' | 'notifyChecklist') {
@@ -151,6 +189,50 @@ export default function ConfiguracoesPage() {
               )}
             </div>
           )}
+        </div>
+
+        <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
+          <h3 className="mb-1 text-sm font-semibold text-zinc-900">Tema</h3>
+          <p className="mb-4 text-xs text-zinc-400">Escolha a paleta de cores do sistema</p>
+          <div className="flex flex-wrap gap-3">
+            {THEMES.map(t => (
+              <button key={t.value}
+                onClick={() => handleThemeChange(t.value)}
+                className={`flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-all ${
+                  settings?.theme === t.value
+                    ? 'border-zinc-900 bg-zinc-900 text-white shadow-sm'
+                    : 'border-zinc-200 text-zinc-600 hover:border-zinc-300 hover:bg-zinc-50'
+                }`}
+              >
+                <span className="h-3 w-3 rounded-full" style={{ backgroundColor: t.color }} />
+                <span>{t.label}</span>
+                {t.value === 'indigo' && <span className="text-[10px] text-zinc-300">(Padrão)</span>}
+              </button>
+            ))}
+          </div>
+          <div className="mt-4 flex items-center gap-4">
+            <span className="text-xs font-medium text-zinc-500">MODO</span>
+            <button
+              onClick={() => handleModeChange('light')}
+              className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-all ${
+                settings?.mode === 'light'
+                  ? 'border-zinc-900 bg-zinc-900 text-white shadow-sm'
+                  : 'border-zinc-200 text-zinc-600 hover:border-zinc-300 hover:bg-zinc-50'
+              }`}
+            >
+              <Sun size={14} /> Claro
+            </button>
+            <button
+              onClick={() => handleModeChange('dark')}
+              className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-all ${
+                settings?.mode === 'dark'
+                  ? 'border-zinc-900 bg-zinc-900 text-white shadow-sm'
+                  : 'border-zinc-200 text-zinc-600 hover:border-zinc-300 hover:bg-zinc-50'
+              }`}
+            >
+              <Moon size={14} /> Escuro
+            </button>
+          </div>
         </div>
 
         <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">

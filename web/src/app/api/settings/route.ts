@@ -13,6 +13,8 @@ export async function GET() {
   if (!settings) {
     settings = {
       userId: session.id,
+      theme: 'indigo',
+      mode: 'light',
       notifyTaskAssigned: true,
       notifyDeadline: true,
       notifyChecklist: true,
@@ -30,8 +32,10 @@ export async function PUT(request: Request) {
   }
 
   const body = await request.json()
-  const settings: UserSettings = {
+  const settings = {
     userId: session.id,
+    theme: body.theme ?? 'indigo',
+    mode: body.mode ?? 'light',
     notifyTaskAssigned: body.notifyTaskAssigned ?? true,
     notifyDeadline: body.notifyDeadline ?? true,
     notifyChecklist: body.notifyChecklist ?? true,

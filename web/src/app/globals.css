@@ -12,7 +12,89 @@
   --foreground: #171717;
 }
 
+[data-mode="dark"] {
+  --background: #09090b;
+  --foreground: #fafafa;
+  --color-zinc-50: #18181b; --color-zinc-100: #27272a;
+  --color-zinc-200: #3f3f46; --color-zinc-300: #52525b;
+  --color-zinc-400: #71717a; --color-zinc-500: #a1a1aa;
+  --color-zinc-600: #d4d4d8; --color-zinc-700: #e4e4e7;
+  --color-zinc-800: #f4f4f5; --color-zinc-900: #fafafa;
+  --color-zinc-950: #ffffff;
+  --color-white: #18181b;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
+}
+
+[data-theme="emerald"] {
+  --color-indigo-50: #ecfdf5; --color-indigo-100: #d1fae5; --color-indigo-200: #a7f3d0;
+  --color-indigo-300: #6ee7b7; --color-indigo-400: #34d399; --color-indigo-500: #10b981;
+  --color-indigo-600: #059669; --color-indigo-700: #047857; --color-indigo-800: #065f46;
+  --color-indigo-900: #064e3b; --color-sky-500: #10b981; --color-sky-600: #059669;
+}
+
+[data-theme="emerald"][data-mode="dark"] {
+  --color-indigo-50: #022c22; --color-indigo-100: #064e3b; --color-indigo-200: #065f46;
+  --color-indigo-300: #047857; --color-indigo-400: #059669; --color-indigo-500: #10b981;
+  --color-indigo-600: #34d399; --color-indigo-700: #6ee7b7; --color-indigo-800: #a7f3d0;
+  --color-indigo-900: #d1fae5; --color-sky-500: #10b981; --color-sky-600: #34d399;
+}
+
+[data-theme="rose"] {
+  --color-indigo-50: #fff1f2; --color-indigo-100: #ffe4e6; --color-indigo-200: #fecdd3;
+  --color-indigo-300: #fda4af; --color-indigo-400: #fb7185; --color-indigo-500: #f43f5e;
+  --color-indigo-600: #e11d48; --color-indigo-700: #be123c; --color-indigo-800: #9f1239;
+  --color-indigo-900: #881337; --color-sky-500: #f43f5e; --color-sky-600: #e11d48;
+}
+
+[data-theme="rose"][data-mode="dark"] {
+  --color-indigo-50: #4c0519; --color-indigo-100: #881337; --color-indigo-200: #9f1239;
+  --color-indigo-300: #be123c; --color-indigo-400: #e11d48; --color-indigo-500: #f43f5e;
+  --color-indigo-600: #fb7185; --color-indigo-700: #fda4af; --color-indigo-800: #fecdd3;
+  --color-indigo-900: #ffe4e6; --color-sky-500: #f43f5e; --color-sky-600: #fb7185;
+}
+
+[data-theme="amber"] {
+  --color-indigo-50: #fffbeb; --color-indigo-100: #fef3c7; --color-indigo-200: #fde68a;
+  --color-indigo-300: #fcd34d; --color-indigo-400: #fbbf24; --color-indigo-500: #f59e0b;
+  --color-indigo-600: #d97706; --color-indigo-700: #b45309; --color-indigo-800: #92400e;
+  --color-indigo-900: #78350f; --color-sky-500: #f59e0b; --color-sky-600: #d97706;
+}
+
+[data-theme="amber"][data-mode="dark"] {
+  --color-indigo-50: #451a03; --color-indigo-100: #78350f; --color-indigo-200: #92400e;
+  --color-indigo-300: #b45309; --color-indigo-400: #d97706; --color-indigo-500: #f59e0b;
+  --color-indigo-600: #fbbf24; --color-indigo-700: #fcd34d; --color-indigo-800: #fde68a;
+  --color-indigo-900: #fef3c7; --color-sky-500: #f59e0b; --color-sky-600: #fbbf24;
+}
+
+[data-theme="violet"] {
+  --color-indigo-50: #f5f3ff; --color-indigo-100: #ede9fe; --color-indigo-200: #ddd6fe;
+  --color-indigo-300: #c4b5fd; --color-indigo-400: #a78bfa; --color-indigo-500: #8b5cf6;
+  --color-indigo-600: #7c3aed; --color-indigo-700: #6d28d9; --color-indigo-800: #5b21b6;
+  --color-indigo-900: #4c1d95; --color-sky-500: #8b5cf6; --color-sky-600: #7c3aed;
+}
+
+[data-theme="violet"][data-mode="dark"] {
+  --color-indigo-50: #2e1065; --color-indigo-100: #4c1d95; --color-indigo-200: #5b21b6;
+  --color-indigo-300: #6d28d9; --color-indigo-400: #7c3aed; --color-indigo-500: #8b5cf6;
+  --color-indigo-600: #a78bfa; --color-indigo-700: #c4b5fd; --color-indigo-800: #ddd6fe;
+  --color-indigo-900: #ede9fe; --color-sky-500: #8b5cf6; --color-sky-600: #a78bfa;
+}
+
+[data-theme="cyan"] {
+  --color-indigo-50: #ecfeff; --color-indigo-100: #cffafe; --color-indigo-200: #a5f3fc;
+  --color-indigo-300: #67e8f9; --color-indigo-400: #22d3ee; --color-indigo-500: #06b6d4;
+  --color-indigo-600: #0891b2; --color-indigo-700: #0e7490; --color-indigo-800: #155e75;
+  --color-indigo-900: #164e63; --color-sky-500: #06b6d4; --color-sky-600: #0891b2;
+}
+
+[data-theme="cyan"][data-mode="dark"] {
+  --color-indigo-50: #164e63; --color-indigo-100: #155e75; --color-indigo-200: #0e7490;
+  --color-indigo-300: #0891b2; --color-indigo-400: #06b6d4; --color-indigo-500: #22d3ee;
+  --color-indigo-600: #67e8f9; --color-indigo-700: #a5f3fc; --color-indigo-800: #cffafe;
+  --color-indigo-900: #ecfeff; --color-sky-500: #22d3ee; --color-sky-600: #67e8f9;
 }

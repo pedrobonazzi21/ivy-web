@@ -146,6 +146,8 @@ model Notification {
 
 model UserSettings {
   userId             String  @id
+  theme              String  @default("indigo")
+  mode               String  @default("light")
   notifyTaskAssigned Boolean @default(true)
   notifyDeadline     Boolean @default(true)
   notifyChecklist    Boolean @default(true)

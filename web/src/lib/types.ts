@@ -332,12 +332,26 @@ export interface Notification {
 }
 
 // === User Settings ===
+export type Theme = 'indigo' | 'emerald' | 'rose' | 'amber' | 'violet' | 'cyan'
+export type Mode = 'light' | 'dark'
+
 export interface UserSettings {
   userId: string
+  theme: Theme
+  mode: Mode
   notifyTaskAssigned: boolean
   notifyDeadline: boolean
   notifyChecklist: boolean
 }
+
+export const THEMES: { value: Theme; label: string; color: string }[] = [
+  { value: 'indigo', label: 'Padrão', color: '#4f46e5' },
+  { value: 'emerald', label: 'Verde', color: '#059669' },
+  { value: 'rose', label: 'Rosa', color: '#e11d48' },
+  { value: 'amber', label: 'Âmbar', color: '#d97706' },
+  { value: 'violet', label: 'Violeta', color: '#7c3aed' },
+  { value: 'cyan', label: 'Ciano', color: '#0891b2' },
+]
 
 export const NOTIFICATION_TYPES = ['task_assigned', 'deadline', 'checklist', 'team', 'system'] as const
 
