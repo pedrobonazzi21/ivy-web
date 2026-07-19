@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Settings, Loader, Camera, Key, Check, X, Upload } from 'lucide-react'
-import { auth } from '@/lib/firebase'
-import { updatePassword, reauthenticateWithCredential, EmailAuthProvider, sendPasswordResetEmail } from 'firebase/auth'
+import { Settings, Loader, Camera, Key } from 'lucide-react'
+import { auth, uploadFile } from '@/lib/firebase'
+import { sendPasswordResetEmail } from 'firebase/auth'
 import type { UserSettings } from '@/lib/types'
 import { ROLE_LABELS } from '@/lib/types'
 
@@ -39,18 +39,11 @@ export default function ConfiguracoesPage() {
     const file = e.target.files?.[0]
     if (!file) return
     setUploading(true)
-
-    const formData = new FormData()
-    formData.append('file', file)
-    formData.append('path', `avatars/${user?.email}`)
-
-    const res = await fetch('/api/upload', {
-      method: 'POST',
-      body: formData,
-    })
-    const data = await res.json()
-    if (data.url) {
-      setPhotoUrl(data.url)
+    try {
+      const url = await uploadFile(file, `avatars/${user?.email}_${Date.now()}`)
+      setPhotoUrl(url)
+    } catch {
+      console.error('Erro ao enviar foto')
     }
     setUploading(false)
   }
