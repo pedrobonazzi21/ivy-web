@@ -1,5 +1,6 @@
 import prisma from './prisma'
-import type { ProjectStats, Activity, Task, Component, TeamMember, TaskStatus, DiaryEntry, TestRecord, FileVersion, Comment, CalendarEvent, FebraceData, Role } from './types'
+import type { ProjectStats, Activity, Task, Component, TeamMember, TaskStatus, DiaryEntry, TestRecord, FileVersion, Comment, CalendarEvent, FebraceData, Role, Goal, GoalItem, ChecklistItem } from './types'
+import { FEBRACE_CHECKLIST_ITEMS } from './types'
 
 export type FileEntry = {
   id: string
@@ -26,6 +27,17 @@ function now() {
 }
 
 // === Stats ===
+const PRIORITY_WEIGHT: Record<string, number> = { alta: 3, media: 2, baixa: 1 }
+
+function calcProgressFromTasks(tasks: { status: string; priority: string }[]): number {
+  if (tasks.length === 0) return 0
+  const totalWeight = tasks.reduce((s, t) => s + (PRIORITY_WEIGHT[t.priority] ?? 1), 0)
+  const doneWeight = tasks
+    .filter(t => t.status === 'concluido')
+    .reduce((s, t) => s + (PRIORITY_WEIGHT[t.priority] ?? 1), 0)
+  return Math.round((doneWeight / totalWeight) * 100)
+}
+
 export async function getStats(): Promise<ProjectStats> {
   const [tasks, components, files, tests, members, statsRow] = await Promise.all([
     prisma.task.findMany(),
@@ -36,8 +48,10 @@ export async function getStats(): Promise<ProjectStats> {
     prisma.stats.findUnique({ where: { id: 'singleton' } }),
   ])
 
+  const autoProgress = calcProgressFromTasks(tasks)
+
   return {
-    progress: statsRow?.progress ?? 0,
+    progress: autoProgress,
     openTasks: tasks.filter(t => t.status !== 'concluido').length,
     totalComponents: components.length,
     totalFiles: files.length,
@@ -63,11 +77,37 @@ export async function getActivities(): Promise<Activity[]> {
   return rows as Activity[]
 }
 
+export async function getActivitiesPaginated(page: number, pageSize: number) {
+  const [rows, total] = await Promise.all([
+    prisma.activity.findMany({
+      orderBy: { timestamp: 'desc' },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    }),
+    prisma.activity.count(),
+  ])
+  return { activities: rows as Activity[], total, page, pageSize, totalPages: Math.ceil(total / pageSize) }
+}
+
 export async function addActivity(user: string, action: string, target: string): Promise<Activity> {
   const row = await prisma.activity.create({
     data: { id: crypto.randomUUID(), user, action, target, timestamp: now() },
   })
   return row as Activity
+}
+
+export async function updateActivity(id: string, data: { action?: string; target?: string }): Promise<Activity | null> {
+  try {
+    const row = await prisma.activity.update({ where: { id }, data })
+    return row as Activity
+  } catch { return null }
+}
+
+export async function deleteActivity(id: string): Promise<boolean> {
+  try {
+    await prisma.activity.delete({ where: { id } })
+    return true
+  } catch { return false }
 }
 
 // === Files ===
@@ -335,6 +375,119 @@ export async function getFebraceData(): Promise<FebraceData> {
     teamMembers,
     events,
   }
+}
+
+// === Goals (Metas) ===
+export async function getGoals(): Promise<Goal[]> {
+  const rows = await prisma.goal.findMany({
+    orderBy: { createdAt: 'desc' },
+    include: { items: true },
+  })
+  return rows as Goal[]
+}
+
+export async function addGoal(goal: Goal): Promise<Goal> {
+  await prisma.goal.create({
+    data: {
+      id: goal.id,
+      title: goal.title,
+      description: goal.description,
+      status: goal.status,
+      deadline: goal.deadline,
+      progress: goal.progress,
+      createdAt: goal.createdAt,
+      createdBy: goal.createdBy,
+      items: {
+        create: goal.items.map(i => ({ id: i.id, label: i.label, taskId: i.taskId, done: i.done })),
+      },
+    },
+  })
+  return goal
+}
+
+export async function updateGoal(id: string, data: Partial<Goal>): Promise<Goal | null> {
+  try {
+    const { items, ...goalData } = data
+    if (Object.keys(goalData).length > 0) {
+      await prisma.goal.update({ where: { id }, data: goalData as Record<string, unknown> })
+    }
+    if (items) {
+      await prisma.goalItem.deleteMany({ where: { goalId: id } })
+      await prisma.goalItem.createMany({
+        data: items.map(i => ({ id: i.id, goalId: id, label: i.label, taskId: i.taskId, done: i.done })),
+      })
+    }
+    const goals = await getGoals()
+    return goals.find(g => g.id === id) ?? null
+  } catch { return null }
+}
+
+export async function updateGoalItem(itemId: string, done: boolean): Promise<boolean> {
+  try {
+    await prisma.goalItem.update({ where: { id: itemId }, data: { done } })
+    return true
+  } catch { return false }
+}
+
+export async function deleteGoal(id: string): Promise<boolean> {
+  try {
+    await prisma.goalItem.deleteMany({ where: { goalId: id } })
+    await prisma.goal.delete({ where: { id } })
+    return true
+  } catch { return false }
+}
+
+// === FEBRACE Checklist ===
+export async function getChecklistItems(): Promise<ChecklistItem[]> {
+  const rows = await prisma.checklistItem.findMany()
+  return rows as ChecklistItem[]
+}
+
+export async function seedChecklistIfEmpty(): Promise<void> {
+  const count = await prisma.checklistItem.count()
+  if (count > 0) return
+
+  const items = FEBRACE_CHECKLIST_ITEMS.map(item => ({
+    id: crypto.randomUUID(),
+    ...item,
+    done: false,
+    responsible: '',
+    notes: '',
+    updatedAt: '',
+    updatedBy: '',
+  }))
+  for (const item of items) {
+    await prisma.checklistItem.create({ data: item })
+  }
+}
+
+export async function addChecklistItem(item: ChecklistItem): Promise<ChecklistItem> {
+  const row = await prisma.checklistItem.create({ data: item })
+  return row as ChecklistItem
+}
+
+export async function updateChecklistItem(id: string, done: boolean, updatedBy: string): Promise<boolean> {
+  try {
+    await prisma.checklistItem.update({
+      where: { id },
+      data: { done, updatedAt: now(), updatedBy },
+    })
+    return true
+  } catch { return false }
+}
+
+export async function updateChecklistItemDetails(id: string, data: { label?: string; category?: string; responsible?: string; notes?: string }): Promise<boolean> {
+  try {
+    await prisma.checklistItem.update({ where: { id }, data })
+    return true
+  } catch { return false }
+}
+
+export async function deleteChecklistItem(id: string): Promise<boolean> {
+  try {
+    await prisma.checklistItem.delete({ where: { id } })
+    return true
+  } catch { return false }
 }
 
 export const CATEGORIES = [

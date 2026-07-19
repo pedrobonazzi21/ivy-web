@@ -8,6 +8,7 @@ import { PhotoGallery } from './PhotoGallery'
 import { BarChart } from '@/components/charts/BarChart'
 import { DoughnutChart } from '@/components/charts/DoughnutChart'
 import { CalendarView } from '@/components/calendar/CalendarView'
+import { ActivityTimeline } from '@/components/dashboard/ActivityTimeline'
 
 export function FebraceDashboard() {
   const [data, setData] = useState<FebraceData | null>(null)
@@ -104,20 +105,10 @@ export function FebraceDashboard() {
       )}
 
       {data.activities.length > 0 && (
-        <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
-          <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-zinc-500">Linha do Tempo</h3>
-          <div className="max-h-48 space-y-2 overflow-y-auto">
-            {data.activities.slice(0, 10).map(a => (
-              <div key={a.id} className="flex items-center gap-3 text-xs">
-                <div className="h-2 w-2 rounded-full bg-indigo-500" />
-                <span className="font-medium text-zinc-700">{a.user}</span>
-                <span className="text-zinc-500">{a.action}</span>
-                <span className="font-medium text-indigo-600">{a.target}</span>
-                <span className="ml-auto text-zinc-400">{a.timestamp}</span>
-              </div>
-            ))}
-          </div>
-        </div>
+        <ActivityTimeline
+          initialActivities={data.activities.slice(0, 10)}
+          totalActivities={data.activities.length}
+        />
       )}
     </div>
   )

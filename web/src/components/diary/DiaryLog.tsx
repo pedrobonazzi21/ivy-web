@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { BookOpen, FileText, Video, Code, Image, Trash2, Plus, X } from 'lucide-react'
+import { BookOpen, FileText, Video, Code, Image, Trash2, Plus, X, FileDown } from 'lucide-react'
 import type { DiaryEntry } from '@/lib/types'
 import { DIARY_ATTACHMENT_LABELS } from '@/lib/types'
 
@@ -23,6 +23,66 @@ export function DiaryLog() {
   const [date, setDate] = useState(new Date().toISOString().split('T')[0])
   const [content, setContent] = useState('')
   const [error, setError] = useState('')
+  async function handleExportPDF() {
+    const { default: jsPDF } = await import('jspdf')
+
+    const doc = new jsPDF('p', 'mm', 'a4')
+    const pageWidth = doc.internal.pageSize.getWidth()
+    const margin = 20
+    let cursorY = margin
+
+    function addTitle(text: string, size: number, y: number) {
+      doc.setFontSize(size)
+      doc.text(text, pageWidth / 2, y, { align: 'center' })
+      return y + size * 0.5
+    }
+
+    cursorY = addTitle('Diário de Bordo', 22, cursorY + 10)
+    doc.setFontSize(10)
+    doc.setTextColor(100)
+    doc.text('Projeto: Robô Educacional FEBRACE', pageWidth / 2, cursorY + 6, { align: 'center' })
+    cursorY += 12
+    doc.setTextColor(0)
+
+    doc.setDrawColor(200)
+    doc.line(margin, cursorY, pageWidth - margin, cursorY)
+    cursorY += 8
+
+    for (const entry of entries) {
+      if (cursorY > 270) {
+        doc.addPage()
+        cursorY = margin + 10
+      }
+
+      doc.setFontSize(9)
+      doc.setTextColor(79, 70, 229)
+      doc.text(entry.date, margin, cursorY)
+      doc.setFontSize(8)
+      doc.setTextColor(160)
+      doc.text(`por ${entry.author}`, margin + 50, cursorY)
+      cursorY += 6
+
+      doc.setFontSize(10)
+      doc.setTextColor(50)
+
+      const lines = doc.splitTextToSize(entry.content, pageWidth - margin * 2)
+      for (const line of lines) {
+        if (cursorY > 275) {
+          doc.addPage()
+          cursorY = margin + 10
+        }
+        doc.text(line, margin, cursorY)
+        cursorY += 5
+      }
+
+      cursorY += 4
+      doc.setDrawColor(230)
+      doc.line(margin, cursorY, pageWidth - margin, cursorY)
+      cursorY += 6
+    }
+
+    doc.save('diario-de-bordo.pdf')
+  }
 
   async function loadEntries() {
     setLoading(true)
@@ -72,13 +132,24 @@ export function DiaryLog() {
           <BookOpen size={20} />
           Diário de Bordo
         </h2>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="flex items-center gap-2 rounded-lg bg-zinc-900 px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-zinc-800"
-        >
-          <Plus size={16} />
-          Nova Entrada
-        </button>
+        <div className="flex items-center gap-2">
+          {entries.length > 0 && (
+            <button
+              onClick={handleExportPDF}
+              className="flex items-center gap-2 rounded-lg border border-zinc-300 px-4 py-2 text-sm font-semibold text-zinc-700 transition-all hover:bg-zinc-50"
+            >
+              <FileDown size={16} />
+              Exportar PDF
+            </button>
+          )}
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="flex items-center gap-2 rounded-lg bg-zinc-900 px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-zinc-800"
+          >
+            <Plus size={16} />
+            Nova Entrada
+          </button>
+        </div>
       </div>
 
       {showForm && (

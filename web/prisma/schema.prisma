@@ -123,3 +123,65 @@ model Stats {
   totalTests      Int    @default(0)
   lastUpdate      String
 }
+
+model GoogleToken {
+  id           String @id
+  accessToken  String
+  refreshToken String
+  expiryDate   String
+  scope        String
+  tokenType    String
+}
+
+model GoogleDriveLink {
+  id              String @id @default(uuid())
+  fileId          String @unique
+  fileName        String
+  mimeType        String
+  webUrl          String
+  linkedBy        String
+  linkedAt        String
+  lastSyncedAt    String
+  lastModifiedAt  String
+  content         String @default("")
+}
+
+model Goal {
+  id          String @id @default(uuid())
+  title       String
+  description String @default("")
+  status      String @default("nao_iniciada")
+  deadline    String @default("")
+  progress    Int    @default(0)
+  createdAt   String
+  createdBy   String
+  items       GoalItem[]
+}
+
+model GoalItem {
+  id       String  @id @default(uuid())
+  goalId   String
+  label    String
+  taskId   String  @default("")
+  done     Boolean @default(false)
+  goal     Goal    @relation(fields: [goalId], references: [id])
+}
+
+model ChecklistItem {
+  id          String  @id @default(uuid())
+  category    String
+  label       String
+  done        Boolean @default(false)
+  responsible String  @default("")
+  notes       String  @default("")
+  updatedAt   String
+  updatedBy   String
+}
+
+model FebraceReport {
+  id        String @id @default(uuid())
+  title     String
+  content   String @default("")
+  createdAt String
+  createdBy String
+}

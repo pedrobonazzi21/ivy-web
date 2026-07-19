@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createSession } from '@/lib/session'
+import prisma from '@/lib/prisma'
 
 const FIREBASE_API_KEY = 'AIzaSyD_zyX7Zanc0scjxdlaDk-xkJSt3pv4naQ'
 
@@ -23,12 +24,27 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Token inválido' }, { status: 401 })
     }
 
-    const user = data.users[0]
+    const fbUser = data.users[0]
+    const name = fbUser.displayName || fbUser.email || 'Usuário'
+    const email = fbUser.email || ''
+
+    const existing = await prisma.teamMember.findFirst({ where: { email } })
+    if (!existing) {
+      await prisma.teamMember.create({
+        data: {
+          id: crypto.randomUUID(),
+          name,
+          email,
+          role: 'admin',
+          invitedAt: new Date().toLocaleString('pt-BR'),
+        },
+      })
+    }
 
     await createSession({
-      id: user.localId,
-      name: user.displayName || user.email || 'Usuário',
-      email: user.email || '',
+      id: fbUser.localId,
+      name,
+      email,
       role: 'admin',
     })
 

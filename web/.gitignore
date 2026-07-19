@@ -47,3 +47,10 @@ next-env.d.ts
 dev.db
 schema.sql
 deploy-schema.js
+
+.vercel
+.env*
+
+# uploads
+/public/uploads/
+

@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { FebraceDashboard } from '@/components/febrace/FebraceDashboard'
-import { NavHeader } from '@/components/shared/NavHeader'
 import { useRouter } from 'next/navigation'
 
 export default function FebracePage() {
@@ -28,7 +27,6 @@ export default function FebracePage() {
 
   return (
     <div className="mx-auto w-full max-w-6xl px-6 py-8">
-      <NavHeader user={user} />
       <FebraceDashboard />
     </div>
   )

@@ -1,8 +1,15 @@
 import { NextResponse } from 'next/server'
-import { getActivities, addActivity } from '@/lib/store'
+import { getActivities, getActivitiesPaginated, addActivity } from '@/lib/store'
 import { getSession } from '@/lib/session'
 
-export async function GET() {
+export async function GET(request: Request) {
+  const url = new URL(request.url)
+  const page = url.searchParams.get('page')
+  const pageSize = url.searchParams.get('pageSize')
+
+  if (page && pageSize) {
+    return NextResponse.json(await getActivitiesPaginated(Number(page), Number(pageSize)))
+  }
   return NextResponse.json(await getActivities())
 }
 

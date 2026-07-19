@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { TeamManager } from '@/components/team/TeamManager'
-import { NavHeader } from '@/components/shared/NavHeader'
 import { useRouter } from 'next/navigation'
 
 export default function EquipePage() {
@@ -28,8 +27,6 @@ export default function EquipePage() {
 
   return (
     <div className="mx-auto w-full max-w-4xl px-6 py-8">
-      <NavHeader user={user} />
-
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-zinc-900">Equipe</h1>
         <p className="mt-1 text-sm text-zinc-500">

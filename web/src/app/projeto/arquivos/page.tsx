@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { FileUpload } from '@/components/files/FileUpload'
 import { FileList } from '@/components/files/FileList'
-import { NavHeader } from '@/components/shared/NavHeader'
 import { useRouter } from 'next/navigation'
 
 export default function ArquivosPage() {
@@ -30,8 +29,6 @@ export default function ArquivosPage() {
 
   return (
     <div className="mx-auto w-full max-w-6xl px-6 py-8">
-      <NavHeader user={user} />
-
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-zinc-900">Arquivos</h1>
         <p className="mt-1 text-sm text-zinc-500">

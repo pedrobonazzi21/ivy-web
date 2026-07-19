@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Users, UserPlus, Shield, UserCircle, Eye, Trash2, X } from 'lucide-react'
+import { Users, UserPlus, Shield, UserCircle, Eye, Trash2, X, Pencil, Check } from 'lucide-react'
 import type { TeamMember, Role } from '@/lib/types'
 import { ROLE_LABELS } from '@/lib/types'
 
@@ -19,6 +19,8 @@ export function TeamManager() {
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteRole, setInviteRole] = useState<Role>('colaborador')
   const [error, setError] = useState('')
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editName, setEditName] = useState('')
 
   async function loadMembers() {
     setLoading(true)
@@ -57,6 +59,17 @@ export function TeamManager() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id, role: newRole }),
     })
+    loadMembers()
+  }
+
+  async function handleSaveName(id: string) {
+    if (!editName.trim()) return
+    await fetch('/api/team', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, name: editName.trim() }),
+    })
+    setEditingId(null)
     loadMembers()
   }
 
@@ -152,7 +165,31 @@ export function TeamManager() {
                   {member.name.charAt(0).toUpperCase()}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-zinc-900">{member.name}</p>
+                  {editingId === member.id ? (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') handleSaveName(member.id); if (e.key === 'Escape') setEditingId(null) }}
+                        onBlur={() => handleSaveName(member.id)}
+                        className="w-full rounded-lg border border-indigo-300 px-3 py-1.5 text-sm font-medium outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                        autoFocus
+                      />
+                      <button onClick={() => handleSaveName(member.id)} className="rounded p-1 text-indigo-600 hover:bg-indigo-50">
+                        <Check size={15} />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium text-zinc-900">{member.name}</p>
+                      <button onClick={() => { setEditingId(member.id); setEditName(member.name) }}
+                        className="rounded p-1 text-zinc-300 hover:bg-zinc-100 hover:text-zinc-600"
+                      >
+                        <Pencil size={13} />
+                      </button>
+                    </div>
+                  )}
                   <p className="text-xs text-zinc-400">{member.email}</p>
                 </div>
                 <div className="flex items-center gap-2">

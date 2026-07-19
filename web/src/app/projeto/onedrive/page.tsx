@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { Cloud } from 'lucide-react'
 import { OneDriveBrowser } from '@/components/onedrive/OneDriveBrowser'
-import { NavHeader } from '@/components/shared/NavHeader'
 import { useRouter } from 'next/navigation'
 import type { OneDriveItem } from '@/lib/onedrive/store'
 
@@ -65,8 +64,6 @@ export default function OneDrivePage() {
 
   return (
     <div className="mx-auto w-full max-w-6xl px-6 py-8">
-      <NavHeader user={user} />
-
       <div className="mb-8 flex items-center gap-3">
         <Cloud size={24} className="text-indigo-600" />
         <div>

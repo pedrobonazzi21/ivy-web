@@ -5,7 +5,6 @@ import { Package, Plus } from 'lucide-react'
 import { ComponentList } from '@/components/components/ComponentList'
 import { ComponentForm } from '@/components/components/ComponentForm'
 import { StockAlert } from '@/components/components/StockAlert'
-import { NavHeader } from '@/components/shared/NavHeader'
 import { useRouter } from 'next/navigation'
 import type { Component } from '@/lib/types'
 
@@ -46,8 +45,6 @@ export default function ComponentesPage() {
 
   return (
     <div className="mx-auto w-full max-w-6xl px-6 py-8">
-      <NavHeader user={user} />
-
       <div className="mb-8 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-zinc-900">Componentes</h1>

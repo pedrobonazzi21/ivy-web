@@ -13,6 +13,22 @@ const ICON_MAP: Record<string, typeof FileText> = {
   FileText, Box, Code, Image, Video,
 }
 
+async function uploadToServer(file: File): Promise<string> {
+  const formData = new FormData()
+  formData.append('file', file)
+  const res = await fetch('/api/upload', { method: 'POST', body: formData })
+  if (!res.ok) throw new Error('Falha no upload')
+  const data = await res.json()
+  return data.url
+}
+
+function uploadWithTimeout(file: File, path: string, onProgress: (pct: number) => void, timeoutMs = 30000): Promise<string> {
+  return Promise.race([
+    uploadFile(file, path, onProgress),
+    new Promise<string>((_, reject) => setTimeout(() => reject(new Error('Timeout')), timeoutMs)),
+  ])
+}
+
 export function FileUpload({ onUploaded }: FileUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [file, setFile] = useState<File | null>(null)
@@ -27,17 +43,27 @@ export function FileUpload({ onUploaded }: FileUploadProps) {
       setError('Selecione um arquivo')
       return
     }
-    if (!auth.currentUser) {
-      setError('Faça login novamente')
-      return
-    }
 
     setLoading(true)
+    setProgress(1)
     setError('')
 
     try {
-      const path = `projetos/ivy/${category}/${Date.now()}_${file.name}`
-      const url = await uploadFile(file, path, (pct) => setProgress(Math.round(pct)))
+      let url: string
+
+      if (auth.currentUser) {
+        try {
+          const path = `projetos/ivy/${category}/${Date.now()}_${file.name}`
+          url = await uploadWithTimeout(file, path, (pct) => setProgress(Math.round(pct)))
+        } catch {
+          setProgress(50)
+          url = await uploadToServer(file)
+        }
+      } else {
+        url = await uploadToServer(file)
+      }
+
+      setProgress(75)
 
       const res = await fetch('/api/files', {
         method: 'POST',
@@ -55,6 +81,8 @@ export function FileUpload({ onUploaded }: FileUploadProps) {
         setError(d.error || 'Erro ao enviar')
         return
       }
+
+      setProgress(90)
 
       await fetch('/api/activities', {
         method: 'POST',
@@ -125,7 +153,7 @@ export function FileUpload({ onUploaded }: FileUploadProps) {
           </div>
         </div>
 
-        {loading && progress > 0 && (
+        {loading && (
           <div>
             <div className="flex items-center justify-between text-xs text-zinc-500 mb-1">
               <span>Enviando...</span>

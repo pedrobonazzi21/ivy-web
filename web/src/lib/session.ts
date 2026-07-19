@@ -9,6 +9,7 @@ export type SessionUser = {
   role: 'admin' | 'colaborador' | 'visitante'
   teamCode?: string
   onedriveConnected?: boolean
+  googleConnected?: boolean
 }
 
 function encode(user: SessionUser): string {

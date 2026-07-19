@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { StatusOverview } from '@/components/dashboard/StatusOverview'
 import { ActivityTimeline } from '@/components/dashboard/ActivityTimeline'
-import { NavHeader } from '@/components/shared/NavHeader'
 import { StockAlert } from '@/components/components/StockAlert'
 import type { ProjectStats, Activity } from '@/lib/types'
 import { useRouter } from 'next/navigation'
@@ -11,6 +10,7 @@ import { useRouter } from 'next/navigation'
 type DashboardData = {
   stats: ProjectStats
   activities: Activity[]
+  totalActivities: number
 }
 
 export default function DashboardPage() {
@@ -41,8 +41,6 @@ export default function DashboardPage() {
 
   return (
     <div className="mx-auto w-full max-w-6xl px-6 py-8">
-      <NavHeader user={user} />
-
       <div className="mb-6">
         <StockAlert />
       </div>
@@ -52,7 +50,11 @@ export default function DashboardPage() {
           <StatusOverview stats={data.stats} />
         </div>
         <div>
-          <ActivityTimeline activities={data.activities} />
+          <ActivityTimeline
+            initialActivities={data.activities}
+            totalActivities={data.totalActivities}
+            refreshInterval={30000}
+          />
         </div>
       </div>
     </div>

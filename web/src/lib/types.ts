@@ -209,6 +209,86 @@ export const CALENDAR_EVENT_LABELS: Record<CalendarEventType, string> = {
   competicao: 'Competição',
 }
 
+// === Goals (Metas) ===
+export type GoalStatus = 'nao_iniciada' | 'em_andamento' | 'concluida'
+
+export interface Goal {
+  id: string
+  title: string
+  description: string
+  status: GoalStatus
+  deadline: string
+  progress: number
+  createdAt: string
+  createdBy: string
+  items: GoalItem[]
+}
+
+export interface GoalItem {
+  id: string
+  goalId: string
+  label: string
+  taskId: string
+  done: boolean
+}
+
+export const GOAL_STATUS_LABELS: Record<GoalStatus, string> = {
+  nao_iniciada: 'Não Iniciada',
+  em_andamento: 'Em Andamento',
+  concluida: 'Concluída',
+}
+
+export const GOAL_STATUS_COLORS: Record<GoalStatus, string> = {
+  nao_iniciada: 'text-zinc-400',
+  em_andamento: 'text-sky-600',
+  concluida: 'text-green-600',
+}
+
+export const GOAL_STATUS_BG: Record<GoalStatus, string> = {
+  nao_iniciada: 'bg-zinc-100',
+  em_andamento: 'bg-sky-50',
+  concluida: 'bg-green-50',
+}
+
+// === FEBRACE Checklist ===
+export interface ChecklistItem {
+  id: string
+  category: string
+  label: string
+  done: boolean
+  responsible: string
+  notes: string
+  updatedAt: string
+  updatedBy: string
+}
+
+export const CHECKLIST_CATEGORIES = [
+  { value: 'cadastro', label: 'Cadastro' },
+  { value: 'documentacao', label: 'Documentação' },
+  { value: 'midia', label: 'Mídia' },
+  { value: 'personalizado', label: 'Personalizado' },
+] as const
+
+export const CHECKLIST_CATEGORY_LABELS: Record<string, string> = {
+  cadastro: 'Cadastro',
+  documentacao: 'Documentação',
+  midia: 'Mídia',
+  personalizado: 'Personalizado',
+}
+
+export const FEBRACE_CHECKLIST_ITEMS: { category: string; label: string }[] = [
+  { category: 'cadastro', label: 'Cadastro realizado' },
+  { category: 'cadastro', label: 'Projeto criado' },
+  { category: 'documentacao', label: 'Diário atualizado' },
+  { category: 'documentacao', label: 'Banner enviado' },
+  { category: 'midia', label: 'Vídeo enviado' },
+  { category: 'documentacao', label: 'PDF enviado' },
+  { category: 'midia', label: 'Fotos anexadas' },
+  { category: 'documentacao', label: 'Formulário finalizado' },
+]
+
+export const CHECKLIST_CATEGORY_ORDER = ['cadastro', 'documentacao', 'midia', 'personalizado']
+
 export const CALENDAR_EVENT_COLORS: Record<CalendarEventType, string> = {
   tarefa: 'bg-sky-500',
   teste: 'bg-amber-500',
