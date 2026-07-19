@@ -2,8 +2,8 @@
 
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { useState } from 'react'
-import { Menu, X, LayoutDashboard, ClipboardList, Wrench, FolderOpen, FlaskConical, Trophy, Users, CalendarDays, Target, ClipboardCheck } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Menu, X, LayoutDashboard, ClipboardList, Wrench, FolderOpen, FlaskConical, Trophy, Users, CalendarDays, Target, ClipboardCheck, Settings } from 'lucide-react'
 
 type NavSection = {
   label: string
@@ -61,9 +61,22 @@ const SECTIONS: NavSection[] = [
   },
 ]
 
+const BLOCKED_SECTIONS_FOR_VISITANTE = ['Planejamento', 'Recursos', 'Documentação', 'Validação']
+
 export function Sidebar() {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
+  const [role, setRole] = useState<string | null>(null)
+
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then(r => r.json())
+      .then(d => { if (d.authenticated) setRole(d.user.role) })
+  }, [])
+
+  const visibleSections = SECTIONS.filter(s =>
+    role !== 'visitante' || !BLOCKED_SECTIONS_FOR_VISITANTE.includes(s.label)
+  )
 
   function isActive(href: string) {
     if (href === '/dashboard') return pathname === '/dashboard'
@@ -96,7 +109,7 @@ export function Sidebar() {
         </div>
 
         <nav className="flex-1 overflow-y-auto px-3 py-4">
-          {SECTIONS.map(section => {
+          {visibleSections.map(section => {
             const sectionActive = section.items.some(i => isActive(i.href))
             return (
               <div key={section.label} className="mb-5">
@@ -123,8 +136,21 @@ export function Sidebar() {
           })}
         </nav>
 
-        <div className="border-t border-zinc-200 px-5 py-3 text-[11px] text-zinc-400">
-          Projeto: Robô Educacional FEBRACE
+        <div className="border-t border-zinc-200 px-3 pb-3 pt-2">
+          <Link href="/configuracoes"
+            onClick={() => setOpen(false)}
+            className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-all ${
+              pathname === '/configuracoes'
+                ? 'bg-indigo-50 font-medium text-indigo-700'
+                : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800'
+            }`}
+          >
+            <Settings size={16} />
+            Configurações
+          </Link>
+          <p className="mt-2 px-3 text-[11px] text-zinc-400">
+            Projeto: Robô Educacional FEBRACE
+          </p>
         </div>
       </aside>
     </>

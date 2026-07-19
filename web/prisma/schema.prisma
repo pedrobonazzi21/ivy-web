@@ -133,6 +133,24 @@ model GoogleToken {
   tokenType    String
 }
 
+model Notification {
+  id        String  @id @default(uuid())
+  userId    String
+  type      String
+  title     String
+  message   String  @default("")
+  link      String  @default("")
+  read      Boolean @default(false)
+  createdAt String
+}
+
+model UserSettings {
+  userId             String  @id
+  notifyTaskAssigned Boolean @default(true)
+  notifyDeadline     Boolean @default(true)
+  notifyChecklist    Boolean @default(true)
+}
+
 model GoogleDriveLink {
   id              String @id @default(uuid())
   fileId          String @unique

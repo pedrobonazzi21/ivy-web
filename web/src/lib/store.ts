@@ -1,5 +1,5 @@
 import prisma from './prisma'
-import type { ProjectStats, Activity, Task, Component, TeamMember, TaskStatus, DiaryEntry, TestRecord, FileVersion, Comment, CalendarEvent, FebraceData, Role, Goal, GoalItem, ChecklistItem } from './types'
+import type { ProjectStats, Activity, Task, Component, TeamMember, TaskStatus, DiaryEntry, TestRecord, FileVersion, Comment, CalendarEvent, FebraceData, Role, Goal, GoalItem, ChecklistItem, Notification, UserSettings } from './types'
 import { FEBRACE_CHECKLIST_ITEMS } from './types'
 
 export type FileEntry = {
@@ -488,6 +488,64 @@ export async function deleteChecklistItem(id: string): Promise<boolean> {
     await prisma.checklistItem.delete({ where: { id } })
     return true
   } catch { return false }
+}
+
+// === Notifications ===
+export async function getNotifications(userId: string): Promise<Notification[]> {
+  const rows = await prisma.notification.findMany({
+    where: { userId },
+    orderBy: { createdAt: 'desc' },
+    take: 50,
+  })
+  return rows as Notification[]
+}
+
+export async function getUnreadNotificationCount(userId: string): Promise<number> {
+  return prisma.notification.count({ where: { userId, read: false } })
+}
+
+export async function addNotification(notif: Notification): Promise<Notification> {
+  const row = await prisma.notification.create({ data: notif })
+  return row as Notification
+}
+
+export async function markNotificationRead(id: string): Promise<void> {
+  await prisma.notification.update({ where: { id }, data: { read: true } })
+}
+
+export async function markAllNotificationsRead(userId: string): Promise<void> {
+  await prisma.notification.updateMany({ where: { userId, read: false }, data: { read: true } })
+}
+
+export async function createNotificationForUser(userId: string, type: string, title: string, message: string, link: string = '') {
+  const notif: Notification = {
+    id: crypto.randomUUID(),
+    userId,
+    type,
+    title,
+    message,
+    link,
+    read: false,
+    createdAt: now(),
+  }
+  await addNotification(notif)
+}
+
+// === User Settings ===
+export async function getUserSettings(userId: string): Promise<UserSettings | null> {
+  try {
+    const row = await prisma.userSettings.findUnique({ where: { userId } })
+    return row as UserSettings | null
+  } catch { return null }
+}
+
+export async function upsertUserSettings(settings: UserSettings): Promise<UserSettings> {
+  const row = await prisma.userSettings.upsert({
+    where: { userId: settings.userId },
+    create: settings,
+    update: settings,
+  })
+  return row as UserSettings
 }
 
 export const CATEGORIES = [

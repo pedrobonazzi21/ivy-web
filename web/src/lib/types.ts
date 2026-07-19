@@ -80,29 +80,59 @@ export const ROLE_LABELS: Record<Role, string> = {
   visitante: 'Visitante',
 }
 
-export const ROLE_PERMISSIONS: Record<Role, string[]> = {
+export type Permission =
+  | 'visualizar'
+  | 'comentar'
+  | 'criar_tarefas'
+  | 'editar_tarefas'
+  | 'gerenciar_componentes'
+  | 'gerenciar_arquivos'
+  | 'gerenciar_diario'
+  | 'gerenciar_testes'
+  | 'gerenciar_metas'
+  | 'gerenciar_checklist'
+  | 'gerenciar_eventos'
+  | 'gerenciar_equipe'
+  | 'configurar_sistema'
+
+export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   admin: [
-    'Editar tudo',
-    'Excluir',
-    'Criar projetos',
-    'Convidar pessoas',
-    'Integrar OneDrive',
-    'Aprovar tarefas',
-    'Configurar o sistema',
+    'visualizar', 'comentar',
+    'criar_tarefas', 'editar_tarefas',
+    'gerenciar_componentes', 'gerenciar_arquivos',
+    'gerenciar_diario', 'gerenciar_testes',
+    'gerenciar_metas', 'gerenciar_checklist',
+    'gerenciar_eventos', 'gerenciar_equipe',
+    'configurar_sistema',
   ],
   colaborador: [
-    'Criar tarefas',
-    'Comentar',
-    'Anexar arquivos',
-    'Cadastrar testes',
-    'Adicionar componentes',
-    'Atualizar diário',
+    'visualizar',
+    'comentar',
   ],
   visitante: [
-    'Visualizar',
-    'Comentar',
-    'Acompanhar evolução',
+    'visualizar',
+    'comentar',
   ],
+}
+
+export type PageAccess = 'full' | 'read_only' | 'blocked'
+
+export const PAGE_ACCESS: Record<string, { colaborador: PageAccess; visitante: PageAccess }> = {
+  '/projeto/tarefas':      { colaborador: 'read_only', visitante: 'blocked' },
+  '/projeto/calendario':   { colaborador: 'read_only', visitante: 'blocked' },
+  '/projeto/metas':        { colaborador: 'read_only', visitante: 'blocked' },
+  '/projeto/checklist':    { colaborador: 'read_only', visitante: 'blocked' },
+  '/projeto/componentes':  { colaborador: 'read_only', visitante: 'blocked' },
+  '/projeto/arquivos':     { colaborador: 'read_only', visitante: 'blocked' },
+  '/projeto/google':       { colaborador: 'read_only', visitante: 'blocked' },
+  '/projeto/onedrive':     { colaborador: 'read_only', visitante: 'blocked' },
+  '/projeto/diario':       { colaborador: 'read_only', visitante: 'blocked' },
+  '/projeto/testes':       { colaborador: 'read_only', visitante: 'blocked' },
+  '/projeto/febrace':      { colaborador: 'read_only', visitante: 'read_only' },
+  '/projeto/exportar-pdf': { colaborador: 'read_only', visitante: 'blocked' },
+  '/projeto/equipe':       { colaborador: 'read_only', visitante: 'read_only' },
+  '/dashboard':            { colaborador: 'read_only', visitante: 'read_only' },
+  '/configuracoes':        { colaborador: 'read_only', visitante: 'read_only' },
 }
 
 export const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
@@ -288,6 +318,28 @@ export const FEBRACE_CHECKLIST_ITEMS: { category: string; label: string }[] = [
 ]
 
 export const CHECKLIST_CATEGORY_ORDER = ['cadastro', 'documentacao', 'midia', 'personalizado']
+
+// === Notifications ===
+export interface Notification {
+  id: string
+  userId: string
+  type: string
+  title: string
+  message: string
+  link: string
+  read: boolean
+  createdAt: string
+}
+
+// === User Settings ===
+export interface UserSettings {
+  userId: string
+  notifyTaskAssigned: boolean
+  notifyDeadline: boolean
+  notifyChecklist: boolean
+}
+
+export const NOTIFICATION_TYPES = ['task_assigned', 'deadline', 'checklist', 'team', 'system'] as const
 
 export const CALENDAR_EVENT_COLORS: Record<CalendarEventType, string> = {
   tarefa: 'bg-sky-500',

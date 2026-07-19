@@ -1,12 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Users, UserPlus, Shield, UserCircle, Eye, Trash2, X, Pencil, Check } from 'lucide-react'
+import { Users, UserPlus, Shield, UserCircle, Eye, Trash2, X, Pencil, Check, Crown } from 'lucide-react'
 import type { TeamMember, Role } from '@/lib/types'
 import { ROLE_LABELS } from '@/lib/types'
 
 const ROLE_ICONS: Record<Role, typeof Shield> = {
-  admin: Shield,
+  admin: Crown,
   colaborador: UserCircle,
   visitante: Eye,
 }
@@ -21,12 +21,18 @@ export function TeamManager() {
   const [error, setError] = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editName, setEditName] = useState('')
+  const [currentUserRole, setCurrentUserRole] = useState<Role | null>(null)
 
   async function loadMembers() {
     setLoading(true)
-    const res = await fetch('/api/team')
-    const data = await res.json()
+    const [teamRes, meRes] = await Promise.all([
+      fetch('/api/team'),
+      fetch('/api/auth/me'),
+    ])
+    const data = await teamRes.json()
+    const me = await meRes.json()
     setMembers(data)
+    setCurrentUserRole(me.user?.role ?? null)
     setLoading(false)
   }
 
@@ -90,13 +96,15 @@ export function TeamManager() {
           <Users size={20} />
           Equipe ({members.length} membros)
         </h2>
-        <button
-          onClick={() => setShowInvite(!showInvite)}
-          className="flex items-center gap-2 rounded-lg bg-zinc-900 px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-zinc-800"
-        >
-          <UserPlus size={16} />
-          Convidar
-        </button>
+        {currentUserRole === 'admin' && (
+          <button
+            onClick={() => setShowInvite(!showInvite)}
+            className="flex items-center gap-2 rounded-lg bg-zinc-900 px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-zinc-800"
+          >
+            <UserPlus size={16} />
+            Convidar
+          </button>
+        )}
       </div>
 
       {showInvite && (
@@ -127,7 +135,7 @@ export function TeamManager() {
             <div>
               <label className="mb-1 block text-xs font-medium text-zinc-600">Permissão</label>
               <div className="flex gap-2">
-                {(['admin', 'colaborador', 'visitante'] as Role[]).map(r => (
+                    {(['admin', 'colaborador', 'visitante'] as Role[]).map(r => (
                   <button key={r} type="button" onClick={() => setInviteRole(r)}
                     className={`flex-1 rounded-lg border px-4 py-2 text-xs font-medium transition-all ${
                       inviteRole === r
@@ -193,15 +201,21 @@ export function TeamManager() {
                   <p className="text-xs text-zinc-400">{member.email}</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <select
-                    value={member.role}
-                    onChange={(e) => handleRoleChange(member.id, e.target.value as Role)}
-                    className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-700 outline-none focus:border-indigo-500"
-                  >
-                    {(['admin', 'colaborador', 'visitante'] as Role[]).map(r => (
-                      <option key={r} value={r}>{ROLE_LABELS[r]}</option>
-                    ))}
-                  </select>
+                  {currentUserRole === 'admin' ? (
+                    <select
+                      value={member.role}
+                      onChange={(e) => handleRoleChange(member.id, e.target.value as Role)}
+                      className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-700 outline-none focus:border-indigo-500"
+                    >
+{(['admin', 'colaborador', 'visitante'] as Role[]).map(r => (
+                        <option key={r} value={r}>{ROLE_LABELS[r]}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <span className="flex items-center gap-1.5 rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-500">
+                      {ROLE_LABELS[member.role]}
+                    </span>
+                  )}
                   <button
                     onClick={() => handleRemove(member.id, member.name)}
                     className="rounded-lg p-2 text-zinc-400 hover:bg-red-50 hover:text-red-500"
