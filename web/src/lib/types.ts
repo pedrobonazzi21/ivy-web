@@ -166,7 +166,21 @@ export interface DiaryAttachment {
 export interface DiaryEntry {
   id: string
   date: string
+  time: string
+  location: string
+  participants: string[]
   content: string
+  materials: string
+  procedures: string
+  decisions: string
+  learnings: string
+  difficulties: string
+  whatWorked: string
+  nextSteps: string
+  failedAttempts: string
+  possibleCauses: string
+  plannedAdjustments: string
+  newHypotheses: string
   author: string
   attachments: DiaryAttachment[]
   createdAt: string

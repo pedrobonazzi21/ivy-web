@@ -81,12 +81,26 @@ model TeamMember {
 }
 
 model DiaryEntry {
-  id          String @id @default(uuid())
-  date        String
-  content     String
-  author      String
-  attachments String @default("[]")
-  createdAt   String
+  id                String @id @default(uuid())
+  date              String
+  time              String @default("")
+  location          String @default("")
+  participants      String @default("[]")
+  content           String
+  materials         String @default("")
+  procedures        String @default("")
+  decisions         String @default("")
+  learnings         String @default("")
+  difficulties      String @default("")
+  whatWorked        String @default("")
+  nextSteps         String @default("")
+  failedAttempts    String @default("")
+  possibleCauses    String @default("")
+  plannedAdjustments String @default("")
+  newHypotheses     String @default("")
+  author            String
+  attachments       String @default("[]")
+  createdAt         String
 }
 
 model TestRecord {

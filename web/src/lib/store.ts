@@ -237,13 +237,14 @@ export async function getDiaryEntries(): Promise<DiaryEntry[]> {
   const rows = await prisma.diaryEntry.findMany({ orderBy: { date: 'desc' } })
   return rows.map(r => ({
     ...r,
+    participants: parseJSON<string[]>(r.participants),
     attachments: parseJSON<{ id: string; name: string; type: string; url: string }[]>(r.attachments),
   })) as DiaryEntry[]
 }
 
 export async function addDiaryEntry(entry: DiaryEntry): Promise<DiaryEntry> {
   await prisma.diaryEntry.create({
-    data: { ...entry, attachments: JSON.stringify(entry.attachments) },
+    data: { ...entry, participants: JSON.stringify(entry.participants), attachments: JSON.stringify(entry.attachments) },
   })
   return entry
 }
@@ -251,6 +252,7 @@ export async function addDiaryEntry(entry: DiaryEntry): Promise<DiaryEntry> {
 export async function updateDiaryEntry(id: string, partial: Partial<DiaryEntry>): Promise<DiaryEntry | null> {
   try {
     const data: Record<string, unknown> = { ...partial }
+    if (partial.participants) data.participants = JSON.stringify(partial.participants)
     if (partial.attachments) data.attachments = JSON.stringify(partial.attachments)
     await prisma.diaryEntry.update({ where: { id }, data })
     const rows = await getDiaryEntries()

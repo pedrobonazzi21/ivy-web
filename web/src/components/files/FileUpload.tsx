@@ -3,7 +3,6 @@
 import { useState, useRef } from 'react'
 import { Upload, FileText, Box, Code, Image, Video } from 'lucide-react'
 import { CATEGORIES } from '@/lib/store'
-import { uploadFile, auth } from '@/lib/firebase'
 
 type FileUploadProps = {
   onUploaded: () => void
@@ -11,22 +10,6 @@ type FileUploadProps = {
 
 const ICON_MAP: Record<string, typeof FileText> = {
   FileText, Box, Code, Image, Video,
-}
-
-async function uploadToServer(file: File): Promise<string> {
-  const formData = new FormData()
-  formData.append('file', file)
-  const res = await fetch('/api/upload', { method: 'POST', body: formData })
-  if (!res.ok) throw new Error('Falha no upload')
-  const data = await res.json()
-  return data.url
-}
-
-function uploadWithTimeout(file: File, path: string, onProgress: (pct: number) => void, timeoutMs = 30000): Promise<string> {
-  return Promise.race([
-    uploadFile(file, path, onProgress),
-    new Promise<string>((_, reject) => setTimeout(() => reject(new Error('Timeout')), timeoutMs)),
-  ])
 }
 
 export function FileUpload({ onUploaded }: FileUploadProps) {
@@ -49,20 +32,18 @@ export function FileUpload({ onUploaded }: FileUploadProps) {
     setError('')
 
     try {
-      let url: string
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('category', category)
 
-      if (auth.currentUser) {
-        try {
-          const path = `projetos/ivy/${category}/${Date.now()}_${file.name}`
-          url = await uploadWithTimeout(file, path, (pct) => setProgress(Math.round(pct)))
-        } catch {
-          setProgress(50)
-          url = await uploadToServer(file)
-        }
-      } else {
-        url = await uploadToServer(file)
+      const uploadRes = await fetch('/api/upload', { method: 'POST', body: formData })
+      if (!uploadRes.ok) {
+        const d = await uploadRes.json()
+        setError(d.error || 'Falha no upload')
+        return
       }
 
+      const { url } = await uploadRes.json()
       setProgress(75)
 
       const res = await fetch('/api/files', {
